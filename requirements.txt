@@ -13,3 +13,5 @@ pika
 # Machine Learning & Math
 scikit-learn
 numpy
+
+gunicorn
