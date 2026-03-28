@@ -1,0 +1,15 @@
+# Web Server & Visualization
+Flask
+folium
+
+# Data Fetching & Transit Data
+requests
+gtfs-realtime-bindings
+protobuf
+
+# Messaging (RabbitMQ)
+pika
+
+# Machine Learning & Math
+scikit-learn
+numpy
