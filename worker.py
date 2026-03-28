@@ -2,9 +2,10 @@ import pika
 import json
 import numpy as np
 import math
+import os
 from sklearn.cluster import KMeans
 
-RABBITMQ_HOST = "amqps://uorhxbdd:Qq68xALHgnp1ynNQKlFMCtaqGQMwgLMZ@codfish.rmq.cloudamqp.com/uorhxbdd"
+RABBITMQ_HOST = os.environ.get("CLOUDAMQP_URL", "amqps://uorhxbdd:Qq68xALHgnp1ynNQKlFMCtaqGQMwgLMZ@codfish.rmq.cloudamqp.com/uorhxbdd")
 RECOMMENDATION_QUEUE_NAME = 'schedule_recommendation'
 BUS_UPDATE_QUEUE_NAME = 'bus_update'
 
@@ -166,9 +167,7 @@ def callback(ch, method, properties, body):
 
 
 if __name__ == '__main__':
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host=RABBITMQ_HOST)
-    )
+    connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_HOST))
 
     consume_channel = connection.channel()
     consume_channel.queue_declare(queue=BUS_UPDATE_QUEUE_NAME)

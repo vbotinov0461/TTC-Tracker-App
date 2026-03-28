@@ -1,6 +1,7 @@
 import pika
 import time
 import json
+import os
 import requests
 from google.transit import gtfs_realtime_pb2
 
@@ -14,7 +15,7 @@ OCCUPANCY_MAP = {
     6: "NOT_ACCEPTING_PASSENGERS"
 }
 
-RABBITMQ_HOST = "amqps://uorhxbdd:Qq68xALHgnp1ynNQKlFMCtaqGQMwgLMZ@codfish.rmq.cloudamqp.com/uorhxbdd"
+RABBITMQ_HOST = os.environ.get("CLOUDAMQP_URL", "amqps://uorhxbdd:Qq68xALHgnp1ynNQKlFMCtaqGQMwgLMZ@codfish.rmq.cloudamqp.com/uorhxbdd")
 BUS_UPDATE_QUEUE_NAME = 'bus_update'
 URL = "https://bustime.ttc.ca/gtfsrt/vehicles"
 
@@ -48,9 +49,7 @@ def fetch_ttc_vehicles(route_id):
 
 
 if __name__ == '__main__':
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host=RABBITMQ_HOST)
-    )
+    connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_HOST))
     publish_channel = connection.channel()
     publish_channel.queue_declare(queue=BUS_UPDATE_QUEUE_NAME)
 
