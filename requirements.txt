@@ -1,7 +1,3 @@
-# Web Server & Visualization
-Flask
-folium
-
 # Data Fetching & Transit Data
 requests
 gtfs-realtime-bindings
@@ -13,5 +9,3 @@ pika
 # Machine Learning & Math
 scikit-learn
 numpy
-
-gunicorn
