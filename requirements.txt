@@ -1,11 +1,10 @@
-# Data Fetching & Transit Data
+flask
+gunicorn
+pika
 requests
+folium
 gtfs-realtime-bindings
 protobuf
-
-# Messaging (RabbitMQ)
-pika
-
-# Machine Learning & Math
 scikit-learn
+pandas
 numpy

@@ -2,8 +2,17 @@ import pika
 import time
 import json
 import os
+import threading
 import requests
 from google.transit import gtfs_realtime_pb2
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return "TTC Main is running", 200
+
 
 OCCUPANCY_MAP = {
     0: "EMPTY",
@@ -48,11 +57,7 @@ def fetch_ttc_vehicles(route_id):
     return vehicles
 
 
-if __name__ == '__main__':
-    connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_HOST))
-    publish_channel = connection.channel()
-    publish_channel.queue_declare(queue=BUS_UPDATE_QUEUE_NAME)
-
+def run_main(ch):
     print("main running...")
 
     while True:
@@ -66,7 +71,7 @@ if __name__ == '__main__':
             data = {"route_vehicles": route_vehicles}
             message = json.dumps(data)
 
-            publish_channel.basic_publish(
+            ch.basic_publish(
                 exchange="",
                 routing_key=BUS_UPDATE_QUEUE_NAME,
                 body=message
@@ -78,3 +83,18 @@ if __name__ == '__main__':
             print(f"main error: {e}")
 
         time.sleep(10)
+
+
+if __name__ == '__main__':
+    connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_HOST))
+    publish_channel = connection.channel()
+    publish_channel.queue_declare(queue=BUS_UPDATE_QUEUE_NAME)
+
+    thread = threading.Thread(target=run_main, args=(publish_channel, ), daemon=True)
+    thread.start()
+
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
+
+
+    

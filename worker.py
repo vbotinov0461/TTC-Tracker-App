@@ -1,7 +1,9 @@
+from flask import Flask
 import pika
 import json
 import numpy as np
 import math
+import threading
 import os
 from sklearn.cluster import KMeans
 
@@ -11,6 +13,11 @@ BUS_UPDATE_QUEUE_NAME = 'bus_update'
 
 ROUTES = [39, 36, 29, 110, 97]
 
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return "TTC Worker is running", 200
 
 def recommend(vehicles_route_separated):
     budget = 0
@@ -166,6 +173,11 @@ def callback(ch, method, properties, body):
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
+def run_worker(ch):
+    print("Worker running...")
+    ch.start_consuming()
+
+
 if __name__ == '__main__':
     connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_HOST))
 
@@ -182,5 +194,9 @@ if __name__ == '__main__':
         auto_ack=False
     )
 
-    print("Worker running...")
-    consume_channel.start_consuming()
+    # Required for Render Web Service instance type
+    thread = threading.Thread(target=run_worker, args=(consume_channel,), daemon=True)
+    thread.start()
+
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
