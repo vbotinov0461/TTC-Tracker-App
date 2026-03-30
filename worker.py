@@ -1,24 +1,30 @@
-from flask import Flask
-import pika
-import json
 import numpy as np
 import math
-import threading
-import os
+from typing import List, Dict
+from pydantic import BaseModel
 from sklearn.cluster import KMeans
+from fastapi import FastAPI
 
-RABBITMQ_HOST = os.environ.get("CLOUDAMQP_URL", "amqps://uorhxbdd:Qq68xALHgnp1ynNQKlFMCtaqGQMwgLMZ@codfish.rmq.cloudamqp.com/uorhxbdd")
-RECOMMENDATION_QUEUE_NAME = 'schedule_recommendation'
-BUS_UPDATE_QUEUE_NAME = 'bus_update'
 
 ROUTES = [39, 36, 29, 110, 97]
+bus_object = {"kept": None, "removed": None, "OG": None, "xtra": None}
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route('/')
-def health_check():
-    return "TTC Worker is running", 200
+class Vehicle(BaseModel):
+    vehicle_id: str
+    route: str
+    lat: float
+    lon: float
+    timestamp: int
+    bearing: float = 0.0
+    occupancy_status: str
 
+class Active_Vehicles(BaseModel):
+    route_vehicles: Dict[str, List[Vehicle]]
+
+
+# Internal computation functions
 def recommend(vehicles_route_separated):
     budget = 0
     busy = []
@@ -150,53 +156,17 @@ def filter_buses(vehicles):
     return kept, removed
 
 
-def callback(ch, method, properties, body):
-    try:
-        data = json.loads(body)
-        vehicles_route_separated = data["route_vehicles"]
+@app.put("/worker")
+def post_bus(body: Active_Vehicles):
+    data_dict = body.model_dump() # converts pydantic obj back into dict for computing
+    
+    vehicles_route_separated = data_dict["route_vehicles"]
 
-        kept, removed, OG, xtra = recommend(vehicles_route_separated)
-        data_send = {"kept": kept, "removed": removed, "OG": OG, "xtra": xtra}
+    kept, removed, OG, xtra = recommend(vehicles_route_separated)
+    global bus_object
+    new_data = {"kept": kept, "removed": removed, "OG": OG, "xtra": xtra}
+    bus_object.update(new_data)
 
-        message = json.dumps(data_send)
-        publish_channel.basic_publish(
-            exchange='',
-            routing_key=RECOMMENDATION_QUEUE_NAME,
-            body=message
-        )
-
-        print("Sent recommendation update")
-
-    except Exception as e:
-        print(f"Worker error: {e}")
-
-    ch.basic_ack(delivery_tag=method.delivery_tag)
-
-
-def run_worker(ch):
-    print("Worker running...")
-    ch.start_consuming()
-
-
-if __name__ == '__main__':
-    connection = pika.BlockingConnection(pika.URLParameters(RABBITMQ_HOST))
-
-    consume_channel = connection.channel()
-    consume_channel.queue_declare(queue=BUS_UPDATE_QUEUE_NAME)
-
-    global publish_channel
-    publish_channel = connection.channel()
-    publish_channel.queue_declare(queue=RECOMMENDATION_QUEUE_NAME)
-
-    consume_channel.basic_consume(
-        queue=BUS_UPDATE_QUEUE_NAME,
-        on_message_callback=callback,
-        auto_ack=False
-    )
-
-    # Required for Render Web Service instance type
-    thread = threading.Thread(target=run_worker, args=(consume_channel,), daemon=True)
-    thread.start()
-
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+@app.get("/worker")
+def get_bus():
+    return bus_object
