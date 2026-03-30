@@ -1,6 +1,7 @@
 import time
 import requests
 import threading
+import uvicorn
 from google.transit import gtfs_realtime_pb2
 from fastapi import FastAPI
 import os
