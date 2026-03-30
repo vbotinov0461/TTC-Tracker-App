@@ -23,7 +23,7 @@ ROUTES = [39, 36, 29, 110, 97]
 worker_url = os.getenv("REMOTE_WORKER_URL")
 
 @app.api_route("/", methods=["GET", "HEAD"])
-def health_check(request: Request):
+def health_check():
     return {"status": "running"}
 
 
