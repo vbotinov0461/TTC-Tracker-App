@@ -48,8 +48,7 @@ def fetch_ttc_vehicles(route_id):
     return vehicles
 
 
-
-if __name__ == '__main__':
+def bus_logic_loop():
     print("main running...")
 
     while True:
@@ -67,5 +66,15 @@ if __name__ == '__main__':
             print(f"main error: {e}")
 
         time.sleep(10)
+
+
+
+if __name__ == '__main__':
+    # Start the bus logic in the background
+    threading.Thread(target=bus_logic_loop, daemon=True).start()
+    
+    # Start a tiny server just to stay "alive" on Render
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
     
