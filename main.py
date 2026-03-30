@@ -2,6 +2,7 @@ import time
 import requests
 from google.transit import gtfs_realtime_pb2
 from fastapi import FastAPI
+import os
 
 app = FastAPI()
 
@@ -18,7 +19,7 @@ OCCUPANCY_MAP = {
 
 URL = "https://bustime.ttc.ca/gtfsrt/vehicles"
 ROUTES = [39, 36, 29, 110, 97]
-worker_url = "http://localhost:8000/worker"
+worker_url = os.getenv("REMOTE_WORKER_URL")
 
 
 def fetch_ttc_vehicles(route_id):
