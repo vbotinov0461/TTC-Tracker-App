@@ -6,7 +6,6 @@ import os
 
 app = FastAPI()
 
-
 OCCUPANCY_MAP = {
     0: "EMPTY",
     1: "MANY_SEATS_AVAILABLE",
@@ -20,6 +19,10 @@ OCCUPANCY_MAP = {
 URL = "https://bustime.ttc.ca/gtfsrt/vehicles"
 ROUTES = [39, 36, 29, 110, 97]
 worker_url = os.getenv("REMOTE_WORKER_URL")
+
+@app.get("/")
+def health_check():
+    return {"status": "running"}
 
 
 def fetch_ttc_vehicles(route_id):
