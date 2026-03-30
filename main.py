@@ -2,11 +2,10 @@ import time
 import requests
 import threading
 import uvicorn
+from contextlib import asynccontextmanager
 from google.transit import gtfs_realtime_pb2
 from fastapi import FastAPI
 import os
-
-app = FastAPI()
 
 OCCUPANCY_MAP = {
     0: "EMPTY",
@@ -22,9 +21,24 @@ URL = "https://bustime.ttc.ca/gtfsrt/vehicles"
 ROUTES = [39, 36, 29, 110, 97]
 worker_url = os.getenv("REMOTE_WORKER_URL")
 
+# Commit loop logic to lifespan of Web Service
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # This code runs when the server starts
+    print("Background thread starting...")
+    thread = threading.Thread(target=bus_logic_loop, daemon=True)
+    thread.start()
+    yield
+    # This code runs when the server shuts down
+    print("Shutting down...")
+
+
 @app.api_route("/", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "running"}
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 def fetch_ttc_vehicles(route_id):
@@ -71,15 +85,5 @@ def bus_logic_loop():
             print(f"main error: {e}")
 
         time.sleep(30)
-
-
-
-if __name__ == '__main__':
-    # Start the bus logic in the background
-    threading.Thread(target=bus_logic_loop, daemon=True).start()
-    
-    # Start a tiny server just to stay "alive" on Render
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
 
     
