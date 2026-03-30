@@ -21,8 +21,6 @@ URL = "https://bustime.ttc.ca/gtfsrt/vehicles"
 ROUTES = [39, 36, 29, 110, 97]
 worker_url = os.getenv("REMOTE_WORKER_URL")
 
-app = FastAPI(lifespan=lifespan)
-
 
 # Commit loop logic to lifespan of Web Service
 @asynccontextmanager
@@ -34,6 +32,9 @@ async def lifespan(app: FastAPI):
     yield
     # This code runs when the server shuts down
     print("Shutting down...")
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
