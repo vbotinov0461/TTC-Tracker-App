@@ -21,6 +21,9 @@ URL = "https://bustime.ttc.ca/gtfsrt/vehicles"
 ROUTES = [39, 36, 29, 110, 97]
 worker_url = os.getenv("REMOTE_WORKER_URL")
 
+app = FastAPI(lifespan=lifespan)
+
+
 # Commit loop logic to lifespan of Web Service
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,9 +39,6 @@ async def lifespan(app: FastAPI):
 @app.api_route("/", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "running"}
-
-
-app = FastAPI(lifespan=lifespan)
 
 
 def fetch_ttc_vehicles(route_id):
