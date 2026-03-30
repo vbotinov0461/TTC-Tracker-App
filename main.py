@@ -22,8 +22,8 @@ URL = "https://bustime.ttc.ca/gtfsrt/vehicles"
 ROUTES = [39, 36, 29, 110, 97]
 worker_url = os.getenv("REMOTE_WORKER_URL")
 
-@app.get("/", methods=["GET", "HEAD"])
-def health_check():
+@app.api_route("/", methods=["GET", "HEAD"])
+def health_check(request: Request):
     return {"status": "running"}
 
 
