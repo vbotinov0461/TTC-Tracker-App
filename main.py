@@ -70,7 +70,7 @@ def bus_logic_loop():
         except Exception as e:
             print(f"main error: {e}")
 
-        time.sleep(10)
+        time.sleep(30)
 
 
 
